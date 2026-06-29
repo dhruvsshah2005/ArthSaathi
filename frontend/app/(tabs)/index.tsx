@@ -1,98 +1,162 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  Dimensions,
+  Image,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
 
-export default function HomeScreen() {
+export default function WelcomeDashboard() {
+  const router = useRouter();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <View style={styles.container}>
+      {/* Logo Section */}
+      <View style={styles.topSection}>
+        <Text style={styles.logo}>₹</Text>
+        <Text style={styles.title}>ArthSaathi AI</Text>
+        <Text style={styles.subtitle}>
+          Your AI Financial Companion
+        </Text>
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      {/* Illustration Placeholder */}
+      <View style={styles.heroSection}>
+        <View style={styles.circle}>
+          <Image source={require('../../assets/images/gl.png')} style={styles.image} />
+        </View>
+
+        <Text style={styles.tagline}>
+          Smart advice.{'\n'}
+          Better decisions.{'\n'}
+          Stronger future.
+        </Text>
+      </View>
+
+      {/* CTA Section */}
+      <View style={styles.bottomSection}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            pressed && styles.buttonPressed,
+          ]}
+          onPress={() => router.push('/register')}
+        >
+          <Text style={styles.buttonText}>Get Started</Text>
+        </Pressable>
+
+        <Text style={styles.languageText}>
+          Choose Language →
+        </Text>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#F6F3EA',
+    justifyContent: 'space-between',
+    paddingVertical: 70,
+    paddingHorizontal: 24,
   },
-  stepContainer: {
-    gap: 8,
+
+  topSection: {
+    alignItems: 'center',
+  },
+
+  logo: {
+    fontSize: 42,
+    color: '#8B0A2A',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  title: {
+    fontSize: 38,
+    fontWeight: '800',
+    color: '#8B0A2A',
+  },
+
+  subtitle: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+
+  heroSection: {
+    alignItems: 'center',
+  },
+
+  circle: {
+    width: width * 0.55,
+    height: width * 0.55,
+    borderRadius: 999,
+    backgroundColor: '#FCE7F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 30,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 20,
+    elevation: 4,
+  },
+
+  heroEmoji: {
+    fontSize: 80,
+  },
+
+  tagline: {
+    textAlign: 'center',
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#111827',
+    lineHeight: 34,
+  },
+
+  image: {
+  width: '90%',
+  height: '90%',
+  resizeMode: 'cover',
+},
+
+  bottomSection: {
+    width: '100%',
+    alignItems: 'center',
+  },
+
+  button: {
+    width: '100%',
+    backgroundColor: '#8B0A2A',
+    paddingVertical: 18,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#8B0A2A',
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+
+  buttonPressed: {
+    opacity: 0.9,
+    transform: [{ scale: 0.98 }],
+  },
+
+  buttonText: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+
+  languageText: {
+    marginTop: 22,
+    color: '#8B0A2A',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
