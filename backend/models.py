@@ -1,6 +1,6 @@
 # models.py
 import uuid
-from sqlalchemy import Column, String, Float, Integer, ForeignKey, DateTime
+from sqlalchemy import Column, String, Float, Integer, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from database import Base, engine
@@ -38,6 +38,7 @@ class ParametricProfile(Base):
     income_pattern = Column(String, nullable=True)
     
     trust_score = Column(Integer, default=75)
+    is_blind = Column(Boolean, default=False)
 
     # Links the profile back to the user
     user = relationship("User", back_populates="profile")

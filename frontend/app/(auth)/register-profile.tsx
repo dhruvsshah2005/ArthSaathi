@@ -44,6 +44,7 @@ export default function RegisterProfileScreen() {
   const [cropType, setCropType] = useState('');
   const [landHolding, setLandHolding] = useState('');
   const [incomePattern, setIncomePattern] = useState('');
+  const [isBlind, setIsBlind] = useState(false);
 
   const submitRegistration = async () => {
     const safePhone = Array.isArray(phone) ? phone[0] : (phone || "");
@@ -78,6 +79,7 @@ export default function RegisterProfileScreen() {
         income_type: incomeType,
         income_value: incomeType === 'fixed' ? salary : variableRange,
         current_balance: parseFloat(currentBalance) || 0,
+        is_blind: isBlind,
       };
 
       if (selectedOccupation === 'farmer') {
@@ -121,8 +123,8 @@ export default function RegisterProfileScreen() {
         `INSERT INTO parametric_profiles (
           profile_id, user_id, name, language_code, occupation_type, 
           education_level, income_type, income_value, current_balance, 
-          crop_type, land_holding, income_pattern
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          crop_type, land_holding, income_pattern, is_blind
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           localProfileId, 
           localUserId, 
@@ -135,7 +137,8 @@ export default function RegisterProfileScreen() {
           parseFloat(currentBalance) || 0,
           cropType || null, 
           landHolding || null, 
-          incomePattern || null
+          incomePattern || null,
+          isBlind ? 1 : 0
         ]
       );
 
@@ -261,6 +264,22 @@ export default function RegisterProfileScreen() {
           </View>
         </>
       )}
+
+      <Text style={styles.sectionLabel}>Do you require Voice Guidance / Screen Reader?</Text>
+      <View style={styles.toggleContainer}>
+        <Pressable 
+          style={[styles.toggleBtn, isBlind === true && styles.activeToggle]} 
+          onPress={() => setIsBlind(true)}
+        >
+          <Text style={{ color: '#8B0A2A', fontWeight: '600' }}>Yes</Text>
+        </Pressable>
+        <Pressable 
+          style={[styles.toggleBtn, isBlind === false && styles.activeToggle]} 
+          onPress={() => setIsBlind(false)}
+        >
+          <Text style={{ color: '#8B0A2A', fontWeight: '600' }}>No</Text>
+        </Pressable>
+      </View>
 
       <Text style={styles.sectionLabel}>Current Balance</Text>
       <TextInput 

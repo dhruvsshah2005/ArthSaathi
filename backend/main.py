@@ -1,5 +1,6 @@
 # main.py
 from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 import bcrypt
@@ -7,8 +8,17 @@ from jose import jwt
 from datetime import datetime, timedelta
 from typing import Optional
 
-from database import get_db
+from database import get_db, engine
 from models import User, ParametricProfile
+
+# Run automatic schema migration for PostgreSQL
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE parametric_profiles ADD COLUMN IF NOT EXISTS is_blind BOOLEAN DEFAULT FALSE;"))
+        conn.commit()
+    print("✅ PostgreSQL Schema Migration: 'is_blind' column verified/added")
+except Exception as e:
+    print(f"⚠️ PostgreSQL Schema Migration Failed: {e}")
 
 app = FastAPI(title="ArthaSaathi API")
 
@@ -49,6 +59,7 @@ class RegisterPayload(BaseModel):
     crop_type: Optional[str] = None
     land_holding: Optional[str] = None
     income_pattern: Optional[str] = None
+    is_blind: bool = False
 
 # --- Registration Endpoint ---
 @app.post("/api/register")
@@ -82,7 +93,8 @@ def register_user(payload: RegisterPayload, db: Session = Depends(get_db)):
         current_balance=payload.current_balance,
         crop_type=payload.crop_type,
         land_holding=payload.land_holding,
-        income_pattern=payload.income_pattern
+        income_pattern=payload.income_pattern,
+        is_blind=payload.is_blind
     )
     db.add(new_profile)
     db.commit()

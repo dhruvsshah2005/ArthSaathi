@@ -33,9 +33,20 @@ export const initLocalDB = async () => {
       crop_type TEXT,
       land_holding TEXT,
       income_pattern TEXT,
+      is_blind INTEGER DEFAULT 0,
       trust_score INTEGER DEFAULT 75,
       FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
     );
   `);
+
+  // Run schema migrations for existing database installations
+  try {
+    await db.execAsync("ALTER TABLE parametric_profiles ADD COLUMN is_blind INTEGER DEFAULT 0;");
+    console.log("✅ SQLite Schema Migration: Added 'is_blind' column");
+  } catch (error) {
+    // Column already exists, safe to ignore
+    console.log("ℹ️ SQLite Schema Migration: 'is_blind' column already exists");
+  }
+
   console.log("✅ Local SQLite DB & Tables Initialized");
 };
