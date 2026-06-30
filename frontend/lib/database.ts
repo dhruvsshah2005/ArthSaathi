@@ -59,6 +59,17 @@ export const initLocalDB = async () => {
     console.log("ℹ️ SQLite Schema Migration: 'is_blind' column already exists");
   }
 
+  // Farmer specific columns
+  const farmerColumns = ['crop_type', 'land_holding', 'income_pattern'];
+  for (const col of farmerColumns) {
+    try {
+      await db.execAsync(`ALTER TABLE parametric_profiles ADD COLUMN ${col} TEXT;`);
+      console.log(`✅ SQLite Schema Migration: Added '${col}' column`);
+    } catch (error) {
+      console.log(`ℹ️ SQLite Schema Migration: '${col}' column already exists`);
+    }
+  }
+
   try {
     await db.execAsync("ALTER TABLE transactions ADD COLUMN created_at DATETIME;");
     await db.execAsync("UPDATE transactions SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;");

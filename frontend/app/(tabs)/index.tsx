@@ -8,17 +8,19 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Modal,
+  Alert,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { openDB } from '../../lib/database';
+import * as Crypto from 'expo-crypto';
 
 // Import our custom widgets
 import BlindVoice from '@/components/blind-voice';
 import EmergencyFund from '@/components/emergency-fund';
 import FinancialScore from '@/components/financial-score';
 import GovtSchemes from '@/components/govt-schemes';
-import AudioLedger from '@/components/audio-ledger';
 import ExpenditureAnalytics from '@/components/expenditure-analytics';
 
 const { width } = Dimensions.get('window');
@@ -41,6 +43,9 @@ export default function WelcomeDashboard() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [isAudioModalVisible, setAudioModalVisible] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch profile settings on mount/focus
   useFocusEffect(
@@ -83,6 +88,41 @@ export default function WelcomeDashboard() {
     if (value.includes('30,001')) return 45000;
     if (value.includes('15,001')) return 22500;
     return 7500;
+  };
+
+  const handleMockTranscribe = async () => {
+    if (!profile) return;
+    setIsProcessing(true);
+    
+    // Simulate processing delay
+    setTimeout(async () => {
+      try {
+        const db = await openDB();
+        const transactionId = Crypto.randomUUID();
+        const amount = 150;
+        const type = 'debit';
+        const reason = 'Mock: Milk purchase';
+
+        await db.runAsync(
+          `INSERT INTO transactions (transaction_id, user_id, amount, type, reason, synced) VALUES (?, ?, ?, ?, ?, 0)`,
+          [transactionId, profile.user_id, amount, type, reason]
+        );
+
+        await db.runAsync(
+          `UPDATE parametric_profiles SET current_balance = current_balance - ? WHERE user_id = ?`,
+          [amount, profile.user_id]
+        );
+
+        setAudioModalVisible(false);
+        setIsProcessing(false);
+        Alert.alert('Success', 'Recorded: -₹150 for Milk purchase');
+        loadUserProfile(); // Instantly refresh the dashboard balance!
+      } catch (error) {
+        console.error('Failed to save mock transaction:', error);
+        setIsProcessing(false);
+        Alert.alert('Error', 'Failed to save transaction.');
+      }
+    }, 1500);
   };
 
   if (loading) {
@@ -151,46 +191,97 @@ export default function WelcomeDashboard() {
 
   // --- CASE 3: Standard Dashboards (Highly Educated, Farmer, Variable Income, etc.) ---
   return (
-    <ScrollView contentContainerStyle={styles.dashboardScroll}>
-      {/* Greetings & Balance Header */}
-      <View style={styles.dashboardHeader}>
-        <Text style={styles.greetingText}>Hello, {profile.name} 👋</Text>
-        <Text style={styles.occupationLabel}>
-          {profile.occupation_type.toUpperCase().replace('_', ' ')} • {profile.education_level.toUpperCase().replace('_', ' ')}
-        </Text>
+    <View style={{ flex: 1, backgroundColor: '#F6F3EA' }}>
+      <ScrollView contentContainerStyle={styles.dashboardScroll}>
+        {/* Greetings & Balance Header */}
+        <View style={styles.dashboardHeader}>
+          <Text style={styles.greetingText}>Hello, {profile.name} 👋</Text>
+          <Text style={styles.occupationLabel}>
+            {profile.occupation_type.toUpperCase().replace('_', ' ')} • {profile.education_level.toUpperCase().replace('_', ' ')}
+          </Text>
 
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Current Total Balance</Text>
-          <Text style={styles.balanceValue}>₹{profile.current_balance.toLocaleString('en-IN')}</Text>
+          <View style={styles.balanceCard}>
+            <Text style={styles.balanceLabel}>Current Total Balance</Text>
+            <Text style={styles.balanceValue}>₹{profile.current_balance.toLocaleString('en-IN')}</Text>
+          </View>
         </View>
-      </View>
 
-      {/* Conditionally Render Content Widgets based on Persona */}
+        {/* Conditionally Render Content Widgets based on Persona */}
 
-      {/* A. Highly Educated (>12th pass) gets text-dense analytical layout */}
-      {profile.education_level === '12th_pass_above' && (
-        <>
-          <FinancialScore score={profile.trust_score} />
-          <ExpenditureAnalytics />
-        </>
-      )}
+        {/* A. Highly Educated (>12th pass) gets text-dense analytical layout */}
+        {profile.education_level === '12th_pass_above' && (
+          <>
+            <FinancialScore score={profile.trust_score} />
+            <ExpenditureAnalytics />
+          </>
+        )}
 
-      {/* B. Farmer gets Government Schemes and 10-month emergency fund widget */}
-      {profile.occupation_type === 'farmer' && (
-        <>
-          <EmergencyFund currentBalance={profile.current_balance} monthlyIncome={monthlyIncome} isFarmer={true} />
-          <GovtSchemes />
-        </>
-      )}
+        {/* B. Farmer gets Government Schemes and 10-month emergency fund widget */}
+        {profile.occupation_type === 'farmer' && (
+          <>
+            <EmergencyFund currentBalance={profile.current_balance} monthlyIncome={monthlyIncome} isFarmer={true} />
+            <GovtSchemes />
+          </>
+        )}
 
-      {/* C. Variable Income Earner gets 3-month emergency fund widget */}
-      {profile.occupation_type !== 'farmer' && profile.income_type === 'variable' && (
-        <EmergencyFund currentBalance={profile.current_balance} monthlyIncome={monthlyIncome} isFarmer={false} />
-      )}
+        {/* C. Variable Income Earner gets 3-month emergency fund widget */}
+        {profile.occupation_type !== 'farmer' && profile.income_type === 'variable' && (
+          <EmergencyFund currentBalance={profile.current_balance} monthlyIncome={monthlyIncome} isFarmer={false} />
+        )}
 
-      {/* Common Audio Khata Widget across all normal dashboards */}
-      <AudioLedger userId={profile.user_id} onBalanceUpdated={loadUserProfile} />
-    </ScrollView>
+      </ScrollView>
+
+      {/* Persistent Floating Audio Khata Button */}
+      <Pressable
+        style={({ pressed }) => [styles.floatingButton, pressed && styles.floatingButtonPressed]}
+        onPress={() => setAudioModalVisible(true)}
+      >
+        <Text style={styles.floatingButtonIcon}>🎙️</Text>
+        <Text style={styles.floatingButtonText}>Audio Khata</Text>
+      </Pressable>
+
+      {/* Audio Khata Modal Overlay */}
+      <Modal
+        visible={isAudioModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => !isProcessing && setAudioModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Audio Khata</Text>
+            <Text style={styles.modalSubtitle}>Speak how much you spent or earned (e.g. "I spent 150 rupees on milk")</Text>
+            
+            <View style={[styles.micCircle, isProcessing && styles.micCircleProcessing]}>
+              <Text style={styles.bigMic}>🎙️</Text>
+            </View>
+            <Text style={styles.listeningText}>
+              {isProcessing ? 'Processing...' : 'Listening...'}
+            </Text>
+
+            {isProcessing && <ActivityIndicator size="large" color="#8B0A2A" style={{ marginTop: 20 }} />}
+
+            {!isProcessing && (
+              <View style={styles.modalActions}>
+                <Pressable
+                  style={[styles.modalBtn, styles.cancelBtn]}
+                  onPress={() => setAudioModalVisible(false)}
+                >
+                  <Text style={styles.cancelBtnText}>Cancel</Text>
+                </Pressable>
+                
+                <Pressable
+                  style={[styles.modalBtn, styles.mockBtn]}
+                  onPress={handleMockTranscribe}
+                >
+                  <Text style={styles.mockBtnText}>Mock Transcribe</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
@@ -306,7 +397,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F6F3EA',
     padding: 20,
     paddingTop: 50,
-    paddingBottom: 40,
+    paddingBottom: 100, // Extra padding so scroll doesn't hide behind button
   },
   dashboardHeader: {
     marginBottom: 20,
@@ -345,5 +436,117 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#FFF',
     marginTop: 8,
+  },
+
+  // Floating Button & Modal
+  floatingButton: {
+    position: 'absolute',
+    bottom: 24, 
+    right: 24,
+    backgroundColor: '#8B0A2A',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    shadowColor: '#8B0A2A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  floatingButtonPressed: {
+    transform: [{ scale: 0.95 }],
+    opacity: 0.9,
+  },
+  floatingButtonIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  floatingButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '85%',
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 20,
+  },
+  micCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#FCE7F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  micCircleProcessing: {
+    backgroundColor: '#E5E7EB',
+  },
+  bigMic: {
+    fontSize: 48,
+  },
+  listeningText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B0A2A',
+    marginBottom: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginTop: 10,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    backgroundColor: '#F3F4F6',
+  },
+  cancelBtnText: {
+    color: '#4B5563',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  mockBtn: {
+    backgroundColor: '#8B0A2A',
+  },
+  mockBtnText: {
+    color: '#FFF',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });
