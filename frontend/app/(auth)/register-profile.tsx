@@ -265,7 +265,7 @@ export default function RegisterProfileScreen() {
         </>
       )}
 
-      <Text style={styles.sectionLabel}>Do you require Voice Guidance / Screen Reader?</Text>
+      <Text style={styles.sectionLabel}>Are you visually impaired or blind?</Text>
       <View style={styles.toggleContainer}>
         <Pressable 
           style={[styles.toggleBtn, isBlind === true && styles.activeToggle]} 
