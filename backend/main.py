@@ -61,6 +61,10 @@ class RegisterPayload(BaseModel):
     income_pattern: Optional[str] = None
     is_blind: bool = False
 
+class LoginPayload(BaseModel):
+    phone_number: str
+    password: str
+
 # --- Registration Endpoint ---
 @app.post("/api/register")
 def register_user(payload: RegisterPayload, db: Session = Depends(get_db)):
@@ -103,6 +107,52 @@ def register_user(payload: RegisterPayload, db: Session = Depends(get_db)):
     access_token = create_access_token(data={"sub": new_user.user_id, "phone": new_user.phone_number})
     
     return {"access_token": access_token, "token_type": "bearer", "status": "success"}
+
+
+@app.post("/api/login")
+def login_user(payload: LoginPayload, db: Session = Depends(get_db)):
+    # 1. Fetch user by phone number
+    user = db.query(User).filter(User.phone_number == payload.phone_number).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid phone number or password")
+
+    # 2. Verify password hash
+    if not verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=400, detail="Invalid phone number or password")
+
+    # 3. Retrieve user profile
+    profile = db.query(ParametricProfile).filter(ParametricProfile.user_id == user.user_id).first()
+
+    # 4. Generate access token
+    access_token = create_access_token(data={"sub": user.user_id, "phone": user.phone_number})
+
+    # 5. Format profile details
+    profile_data = None
+    if profile:
+        profile_data = {
+            "profile_id": profile.profile_id,
+            "user_id": profile.user_id,
+            "name": profile.name,
+            "language_code": profile.language_code,
+            "occupation_type": profile.occupation_type,
+            "education_level": profile.education_level,
+            "income_type": profile.income_type,
+            "income_value": profile.income_value,
+            "current_balance": profile.current_balance,
+            "crop_type": profile.crop_type,
+            "land_holding": profile.land_holding,
+            "income_pattern": profile.income_pattern,
+            "is_blind": 1 if profile.is_blind else 0,
+            "trust_score": profile.trust_score
+        }
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.user_id,
+        "profile": profile_data,
+        "status": "success"
+    }
 
 
 @app.get("/api/profiles")

@@ -142,8 +142,9 @@ export default function RegisterProfileScreen() {
         ]
       );
 
-      // 5. Store the JWT securely
+      // 5. Store the JWT and active user ID securely
       await SecureStore.setItemAsync('auth_token', data.access_token);
+      await SecureStore.setItemAsync('active_user_id', localUserId);
 
       Alert.alert('Success', 'Account created and synced!', [
         { text: 'Go to Dashboard', onPress: () => router.replace('/(tabs)') }

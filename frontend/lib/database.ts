@@ -37,6 +37,17 @@ export const initLocalDB = async () => {
       trust_score INTEGER DEFAULT 75,
       FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS transactions (
+      transaction_id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL,
+      amount REAL NOT NULL,
+      type TEXT NOT NULL, -- 'credit' or 'debit'
+      reason TEXT NOT NULL,
+      synced INTEGER DEFAULT 0, -- 0 for offline, 1 for synced
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
+    );
   `);
 
   // Run schema migrations for existing database installations
@@ -46,6 +57,15 @@ export const initLocalDB = async () => {
   } catch (error) {
     // Column already exists, safe to ignore
     console.log("ℹ️ SQLite Schema Migration: 'is_blind' column already exists");
+  }
+
+  try {
+    await db.execAsync("ALTER TABLE transactions ADD COLUMN created_at DATETIME;");
+    await db.execAsync("UPDATE transactions SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;");
+    console.log("✅ SQLite Schema Migration: Added 'created_at' column to transactions");
+  } catch (error) {
+    // Column already exists, safe to ignore
+    console.log("ℹ️ SQLite Schema Migration: 'created_at' column already exists in transactions");
   }
 
   console.log("✅ Local SQLite DB & Tables Initialized");
