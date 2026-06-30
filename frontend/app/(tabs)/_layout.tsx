@@ -1,18 +1,10 @@
-import { Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { LogBox } from 'react-native';
+import { Tabs } from 'expo-router';
 
-export default function RootLayout() {
-  useEffect(() => {
-    // Ignore log notifications for cleaner hackathon testing if needed
-    LogBox.ignoreLogs(['Setting a timer']);
-  }, []);
-
+export default function TabLayout() {
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="(tabs)" options={{ gestureEnabled: false }} />
-    </Stack>
+    <Tabs screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="index" />
+      <Tabs.Screen name="explore" />
+    </Tabs>
   );
 }
