@@ -98,9 +98,7 @@ export default function LoginScreen() {
       await SecureStore.setItemAsync('auth_token', data.access_token);
       await SecureStore.setItemAsync('active_user_id', data.user_id);
 
-      Alert.alert('Success', 'Logged in successfully!', [
-        { text: 'Go to Dashboard', onPress: () => router.replace('/(tabs)') },
-      ]);
+      router.replace('/(tabs)');
     } catch (error: any) {
       console.log('Login error details:', error);
       Alert.alert('Login Failed', error.message || 'Check your internet connection.');

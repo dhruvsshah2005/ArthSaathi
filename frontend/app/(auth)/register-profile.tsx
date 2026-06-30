@@ -146,9 +146,7 @@ export default function RegisterProfileScreen() {
       await SecureStore.setItemAsync('auth_token', data.access_token);
       await SecureStore.setItemAsync('active_user_id', localUserId);
 
-      Alert.alert('Success', 'Account created and synced!', [
-        { text: 'Go to Dashboard', onPress: () => router.replace('/(tabs)') }
-      ]);
+      router.replace('/(tabs)');
 
     }catch (error: any) {
       console.log("--- ERROR LOG START ---");
