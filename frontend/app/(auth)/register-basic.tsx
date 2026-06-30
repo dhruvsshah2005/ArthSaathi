@@ -17,7 +17,7 @@ export default function RegisterBasicScreen() {
     }
     // Pass ALL collected data to the final profile screen
     router.push({
-      pathname: '/register-basic',
+      pathname: '/register-profile',
       params: { language, name, phone, password },
     });
   };

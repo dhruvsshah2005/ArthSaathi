@@ -45,7 +45,7 @@ export default function WelcomeDashboard() {
             styles.button,
             pressed && styles.buttonPressed,
           ]}
-          onPress={() => router.push('/register')}
+          onPress={() => router.push('/register-lang')}
         >
           <Text style={styles.buttonText}>Get Started</Text>
         </Pressable>

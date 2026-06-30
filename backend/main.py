@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import bcrypt
 from jose import jwt
 from datetime import datetime, timedelta
+from typing import Optional
 
 from database import get_db
 from models import User, ParametricProfile
@@ -45,9 +46,9 @@ class RegisterPayload(BaseModel):
     income_type: str
     income_value: str
     current_balance: float
-    crop_type: str = None
-    land_holding: str = None
-    income_pattern: str = None
+    crop_type: Optional[str] = None
+    land_holding: Optional[str] = None
+    income_pattern: Optional[str] = None
 
 # --- Registration Endpoint ---
 @app.post("/api/register")

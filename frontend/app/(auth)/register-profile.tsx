@@ -46,6 +46,10 @@ export default function RegisterProfileScreen() {
   const [incomePattern, setIncomePattern] = useState('');
 
   const submitRegistration = async () => {
+    const safePhone = Array.isArray(phone) ? phone[0] : (phone || "");
+    const safePassword = Array.isArray(password) ? password[0] : (password || "");
+    const safeName = Array.isArray(name) ? name[0] : (name || "");
+    const safeLanguage = Array.isArray(language) ? language[0] : (language || "");
     if (!selectedOccupation || !selectedEducation || !currentBalance) {
       Alert.alert('Incomplete Profile', 'Please fill all fields');
       return;
@@ -62,22 +66,25 @@ export default function RegisterProfileScreen() {
       const localProfileId = Crypto.randomUUID();
 
       // 2. Prepare payload exactly matching the FastAPI backend schema
-      const payload = {
+      const payload: any = {
         local_user_id: localUserId,
         local_profile_id: localProfileId,
-        phone_number: phone,
-        password: password,
-        name: name,
-        language_code: language,
+        phone_number: safePhone,
+        password: safePassword, // Pass the plaintext password to the backend
+        name: safeName,
+        language_code: safeLanguage,
         occupation_type: selectedOccupation,
         education_level: selectedEducation,
         income_type: incomeType,
         income_value: incomeType === 'fixed' ? salary : variableRange,
         current_balance: parseFloat(currentBalance) || 0,
-        crop_type: cropType || null,
-        land_holding: landHolding || null,
-        income_pattern: incomePattern || null,
       };
+
+      if (selectedOccupation === 'farmer') {
+        payload.crop_type = cropType;
+        payload.land_holding = landHolding;
+        payload.income_pattern = incomePattern;
+      }
 
       // 3. Send payload to FastAPI using your Ngrok URL
       const response = await fetch('https://graceless-freefall-nimbly.ngrok-free.dev/api/register', {
@@ -86,18 +93,28 @@ export default function RegisterProfileScreen() {
         body: JSON.stringify(payload),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get('content-type');
+      let data: any = {};
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        throw new Error(text || `Request failed with status ${response.status}`);
+      }
 
       if (!response.ok) {
-        throw new Error(data.detail || 'Registration failed on server');
+        throw new Error(
+          typeof data.detail === 'object'
+            ? JSON.stringify(data.detail)
+            : data.detail || 'Registration failed on server'
+        );
       }
 
       // 4. If backend succeeds, save to local SQLite for offline access
       const db = await openDB();
-
       await db.runAsync(
         `INSERT INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
-        [localUserId, phone as string, password as string]
+        [localUserId, safePhone, safePassword] // Using the casted strings
       );
 
       await db.runAsync(
@@ -109,8 +126,8 @@ export default function RegisterProfileScreen() {
         [
           localProfileId, 
           localUserId, 
-          name as string, 
-          language as string, 
+          safeName, 
+          safeLanguage, 
           selectedOccupation, 
           selectedEducation, 
           incomeType, 
@@ -130,9 +147,11 @@ export default function RegisterProfileScreen() {
       ]);
 
     }catch (error: any) {
-      console.log("FULL ERROR:", error); 
-      Alert.alert('Error', error.message || 'Check terminal for details');
-   }
+      console.log("--- ERROR LOG START ---");
+      console.log(error); // This will show you exactly which line failed
+      console.log("--- ERROR LOG END ---");
+      Alert.alert('Error', error.message);
+    }
   };
 
   return (
