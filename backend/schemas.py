@@ -21,3 +21,14 @@ class RegisterPayload(BaseModel):
 class LoginPayload(BaseModel):
     phone_number: str
     password: str
+
+class TransactionSyncItem(BaseModel):
+    transaction_id: str
+    amount: float
+    type: str
+    reason: str
+    created_at: str
+
+class SyncPayload(BaseModel):
+    user_id: str
+    transactions: list[TransactionSyncItem]
