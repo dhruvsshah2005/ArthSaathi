@@ -23,18 +23,21 @@ async def budget_node(state: AgentState, config: RunnableConfig = None):
     balance = profile.get("current_balance", 0)
     income = profile.get("income_value", "0")
     occupation = profile.get("occupation_type", "Unknown")
+    recent_transactions = state.get("recent_transactions", "No recent transactions found.")
     
     user_msg = get_latest_user_message(state["messages"])
     prompt = (
         f"User Occupation: {occupation}\n"
         f"Current Bank Balance: ₹{balance}\n"
-        f"Stated Monthly Income: ₹{income}\n"
+        f"Stated Monthly Income: ₹{income}\n\n"
+        f"Recent Transactions Ledger:\n{recent_transactions}\n\n"
         f"User Request: {user_msg.content}\n\n"
-        "TASK: Analyze the budget quantitatively based on the available profile data.\n"
+        "TASK: Analyze the budget quantitatively based on the available profile data and real transaction history.\n"
         "1. Calculate total available funds.\n"
         "2. Explicitly state the exact numbers (e.g. 'You currently have ₹X in your account and earn ₹Y monthly').\n"
-        "3. Do NOT invent transactions. Work strictly with the provided balance and income.\n"
-        "Do NOT give generic advice. Provide strict numerical facts based on the data."
+        "3. Reference recent transactions if they are relevant to the user's spending request.\n"
+        "4. Do NOT invent transactions. Work strictly with the provided balance, income, and ledger.\n"
+        "Do NOT give generic advice. Provide strict numerical facts and actionable analysis based on the actual ledger."
     )
     response = await llm.ainvoke([HumanMessage(content=prompt)])
     

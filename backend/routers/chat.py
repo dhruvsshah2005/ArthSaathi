@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 
 from database import get_db
-from models import ChatSession, ChatMessage, Document, ParametricProfile
+from models import ChatSession, ChatMessage, Document, ParametricProfile, Transaction
 from langchain_core.messages import HumanMessage, AIMessage as LChainAIMessage
 from agents.graph import agent_graph
 
@@ -108,6 +108,14 @@ async def chat_message(
         "current_balance": profile.current_balance
     } if profile else {}
 
+    # Fetch recent transactions
+    transactions = db.query(Transaction).filter(Transaction.user_id == user_id).order_by(Transaction.created_at.desc()).limit(15).all()
+    recent_transactions_str = ""
+    if transactions:
+        recent_transactions_str = "\n".join([f"- {tx.created_at.strftime('%Y-%m-%d %H:%M')}: {tx.type.upper()} ₹{tx.amount} ({tx.reason})" for tx in transactions])
+    else:
+        recent_transactions_str = "No recent transactions found."
+
     # Fetch chat history for context window
     history = db.query(ChatMessage).filter(ChatMessage.session_id == session.session_id).order_by(ChatMessage.timestamp.asc()).all()[-5:]
     langchain_msgs = []
@@ -135,6 +143,7 @@ async def chat_message(
         "user_profile": profile_dict,
         "messages": langchain_msgs,
         "document_context": context,
+        "recent_transactions": recent_transactions_str,
         "budget_analysis": "",
         "planning_metrics": "",
         "auditor_findings": "",

@@ -27,7 +27,7 @@ export const syncOfflineTransactions = async () => {
     console.log(`☁️ Sync: Found ${unsyncedRows.length} unsynced transactions. Syncing...`);
 
     const response = await axios.post(
-      'https://violation-coastline-otter.ngrok-free.dev/api/transactions/sync',
+      `${process.env.EXPO_PUBLIC_API_URL}/api/transactions/sync`,
       {
         user_id: activeUserId,
         transactions: unsyncedRows.map(row => ({

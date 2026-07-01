@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 
 
 # The connection string uses the format: postgresql://user:password@host/database_name
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres123@localhost/testbase"
+SQLALCHEMY_DATABASE_URL = "postgresql://artha_admin:securepassword123@localhost/arthasaathi"
 
 # Initialize the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

@@ -127,7 +127,7 @@ export default function ChatScreen() {
         } as any);
       }
 
-      const response = await fetch('https://graceless-freefall-nimbly.ngrok-free.dev/api/chat/message', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/chat/message`, {
         method: 'POST',
         body: formData,
         headers: { 'Accept': 'application/json' },

@@ -34,10 +34,6 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
   const [isRecording, setIsRecording] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Load transactions on mount
-  useEffect(() => {
-    loadTransactions();
-  }, [userId, loadTransactions]);
 
   const loadTransactions = useCallback(async () => {
     try {
@@ -53,6 +49,11 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
       setLoading(false);
     }
   }, [userId]);
+
+  // Load transactions on mount
+  useEffect(() => {
+    loadTransactions();
+  }, [userId, loadTransactions]);
 
   const handleAddTransaction = async (type: 'credit' | 'debit') => {
     const parsedAmount = parseFloat(amount);

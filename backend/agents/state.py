@@ -10,8 +10,9 @@ class AgentState(TypedDict):
     # LangGraph's built-in message reducer safely handles merging lists of BaseMessages
     messages: Annotated[List[BaseMessage], add_messages]
     
-    # Context injected from outside (Chroma DB)
+    # Context injected from outside (Chroma DB and Postgres)
     document_context: str
+    recent_transactions: str
     
     # Inter-agent communication / notes
     budget_analysis: str

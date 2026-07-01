@@ -89,7 +89,7 @@ export default function RegisterProfileScreen() {
       }
 
       // 3. Send payload to FastAPI using your Ngrok URL
-      const response = await fetch('https://violation-coastline-otter.ngrok-free.dev/api/register', {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/api/register`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -119,9 +119,7 @@ export default function RegisterProfileScreen() {
       const db = await openDB();
       await db.runAsync(
         `INSERT OR REPLACE INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
-        [localUserId, safePhone, safePassword] // Using the casted strings
-        `INSERT INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
-        localUserId, safePhone, safePassword // Using the casted strings
+        [localUserId, safePhone, safePassword]
       );
 
       await db.runAsync(

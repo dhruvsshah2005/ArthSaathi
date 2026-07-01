@@ -135,7 +135,7 @@ const stopRecording = async () => {
     } as any);
 
     const response = await axios.post(
-      'https://violation-coastline-otter.ngrok-free.dev/audio-khata',
+      `${process.env.EXPO_PUBLIC_API_URL}/audio-khata`,
       formData,
       {
         headers: {
