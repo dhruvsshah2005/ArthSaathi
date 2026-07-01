@@ -55,8 +55,14 @@ export const initLocalDB = async () => {
     await db.execAsync("ALTER TABLE parametric_profiles ADD COLUMN is_blind INTEGER DEFAULT 0;");
     console.log("✅ SQLite Schema Migration: Added 'is_blind' column");
   } catch (error) {
-    // Column already exists, safe to ignore
     console.log("ℹ️ SQLite Schema Migration: 'is_blind' column already exists");
+  }
+
+  try {
+    await db.execAsync("ALTER TABLE parametric_profiles ADD COLUMN trust_score INTEGER DEFAULT 75;");
+    console.log("✅ SQLite Schema Migration: Added 'trust_score' column");
+  } catch (error) {
+    console.log("ℹ️ SQLite Schema Migration: 'trust_score' column already exists");
   }
 
   // Farmer specific columns

@@ -1,5 +1,13 @@
 # main.py
-from fastapi import FastAPI, Depends, HTTPException
+import os
+import uuid
+import pytesseract
+import cv2
+import numpy as np
+from PIL import Image
+import chromadb
+from sentence_transformers import SentenceTransformer
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
@@ -9,7 +17,19 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from database import get_db, engine
-from models import User, ParametricProfile
+from models import User, ParametricProfile, ChatSession, ChatMessage, Document
+
+# Setup Tesseract path for Windows
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Setup Chroma DB
+chroma_client = chromadb.PersistentClient(path="./chroma_data")
+chat_collection = chroma_client.get_or_create_collection(name="chat_embeddings")
+
+# Setup Sentence Transformer (loads all-MiniLM-L6-v2)
+embedder = SentenceTransformer('all-MiniLM-L6-v2')
+
+os.makedirs("uploads/images", exist_ok=True)
 
 # Run automatic schema migration for PostgreSQL
 try:
@@ -160,3 +180,102 @@ def get_all_profiles(db: Session = Depends(get_db)):
     # Fetch all profiles from the PostgreSQL database
     profiles = db.query(ParametricProfile).all()
     return profiles
+
+@app.post("/api/chat/message")
+async def chat_message(
+    user_id: str = Form(...),
+    session_title: str = Form("New Conversation"),
+    message: str = Form(""),
+    image: Optional[UploadFile] = File(None),
+    db: Session = Depends(get_db)
+):
+    # 1. Handle Chat Session
+    session = db.query(ChatSession).filter(ChatSession.user_id == user_id).order_by(ChatSession.created_at.desc()).first()
+    if not session:
+        session = ChatSession(user_id=user_id, session_title=session_title)
+        db.add(session)
+        db.commit()
+
+    document_record = None
+    ocr_text = ""
+
+    # 2. Handle Image Upload & OCR
+    if image:
+        file_ext = image.filename.split('.')[-1] if '.' in image.filename else 'jpg'
+        file_path = f"uploads/images/{uuid.uuid4()}.{file_ext}"
+        
+        with open(file_path, "wb") as buffer:
+            buffer.write(await image.read())
+            
+        # Run OCR with OpenCV Preprocessing
+        try:
+            # Read image using OpenCV
+            cv_img = cv2.imread(file_path)
+            
+            # 1. Convert to Grayscale
+            gray = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
+            
+            # 2. Upscale image by 3x to improve DPI for Tesseract
+            gray = cv2.resize(gray, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+            
+            # 3. Apply Otsu's Binarization (Forces pixels to pure black or pure white)
+            _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            
+            # Convert the processed OpenCV array back into a PIL Image for Tesseract
+            img = Image.fromarray(thresh)
+            
+            ocr_text = pytesseract.image_to_string(img).strip()
+        except Exception as e:
+            print(f"OCR Error: {e}")
+            ocr_text = f"[OCR Failed: {str(e)}]"
+
+        # Create Document in DB
+        document_record = Document(
+            user_id=user_id,
+            file_storage_url=file_path,
+            raw_extracted_text=ocr_text
+        )
+        db.add(document_record)
+        db.commit()
+
+    # 3. Create Chat Messages
+    # User message
+    user_msg_content = message.strip()
+    if ocr_text:
+        user_msg_content += f"\n[Extracted Text from Image]: {ocr_text}"
+
+    user_msg = ChatMessage(
+        session_id=session.session_id,
+        sender_role="User",
+        message_content=user_msg_content
+    )
+    db.add(user_msg)
+
+    # Mock AI message for now
+    ai_msg = ChatMessage(
+        session_id=session.session_id,
+        sender_role="AI_Educator",
+        message_content="I have received your message and processed the image!"
+    )
+    db.add(ai_msg)
+    db.commit()
+
+    # 4. Generate Embeddings & Store in Chroma DB
+    text_to_embed = user_msg_content
+    if text_to_embed:
+        embeddings = embedder.encode(text_to_embed).tolist()
+        
+        chat_collection.add(
+            embeddings=[embeddings],
+            documents=[text_to_embed],
+            metadatas=[{"user_id": user_id, "session_id": session.session_id, "role": "User"}],
+            ids=[user_msg.message_id]
+        )
+
+    return {
+        "status": "success",
+        "message": "Message processed successfully",
+        "ocr_text": ocr_text,
+        "ai_response": ai_msg.message_content,
+        "session_id": session.session_id
+    }

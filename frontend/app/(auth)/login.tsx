@@ -56,47 +56,57 @@ export default function LoginScreen() {
         throw new Error(data.detail || 'Login failed on server');
       }
 
-      // 2. Save User and Profile locally to SQLite for offline access
+      // 2. Ensure profile exists before proceeding
+      if (!data.profile) {
+        throw new Error('No profile found for this user on the server. Please register a complete profile.');
+      }
+
+      const p = data.profile;
+      console.log('Inserting profile data safely to avoid SQLite crash:', p);
+
+      // Safe Primitive Type Casting to prevent Android JSI NullPointerException
+      const profileId = typeof p.profile_id === 'string' ? p.profile_id : '';
+      const userId = typeof p.user_id === 'string' ? p.user_id : (typeof data.user_id === 'string' ? data.user_id : '');
+      const name = typeof p.name === 'string' ? p.name : '';
+      const lang = typeof p.language_code === 'string' ? p.language_code : '';
+      const occ = typeof p.occupation_type === 'string' ? p.occupation_type : '';
+      const edu = typeof p.education_level === 'string' ? p.education_level : '';
+      const incType = typeof p.income_type === 'string' ? p.income_type : '';
+      const incVal = typeof p.income_value === 'string' ? p.income_value : '';
+      const bal = typeof p.current_balance === 'number' ? p.current_balance : 0;
+      const crop = typeof p.crop_type === 'string' ? p.crop_type : '';
+      const land = typeof p.land_holding === 'string' ? p.land_holding : '';
+      const incPat = typeof p.income_pattern === 'string' ? p.income_pattern : '';
+      const isBlind = p.is_blind ? 1 : 0; // Boolean strictly cast to Int
+      const trust = typeof p.trust_score === 'number' ? p.trust_score : 75;
+
+      const mainUserId = typeof data.user_id === 'string' ? data.user_id : '';
+      const safePhone = typeof cleanPhone === 'string' ? cleanPhone : '';
+
+      // 3. Save User and Profile locally to SQLite for offline access
       const db = await openDB();
       
       // Save User locally
       await db.runAsync(
         `INSERT OR REPLACE INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
-        [data.user_id, cleanPhone, ''] // Hashed password is kept secure on backend, empty locally
+        mainUserId, safePhone, '' // Hashed password is kept secure on backend, empty locally
       );
 
       // Save Profile locally
-      if (data.profile) {
-        const p = data.profile;
-        await db.runAsync(
-          `INSERT OR REPLACE INTO parametric_profiles (
-            profile_id, user_id, name, language_code, occupation_type,
-            education_level, income_type, income_value, current_balance,
-            crop_type, land_holding, income_pattern,
-            is_blind, trust_score
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            p.profile_id ?? null,
-            p.user_id ?? null,
-            p.name ?? null,
-            p.language_code ?? null,
-            p.occupation_type ?? null,
-            p.education_level ?? null,
-            p.income_type ?? null,
-            p.income_value ?? null,
-            p.current_balance ?? 0,
-            p.crop_type ?? null,
-            p.land_holding ?? null,
-            p.income_pattern ?? null,
-            p.is_blind ?? 0,
-            p.trust_score ?? 75,
-          ]
-        );
-      }
+      await db.runAsync(
+        `INSERT OR REPLACE INTO parametric_profiles (
+          profile_id, user_id, name, language_code, occupation_type,
+          education_level, income_type, income_value, current_balance,
+          crop_type, land_holding, income_pattern,
+          is_blind, trust_score
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        profileId, userId, name, lang, occ, edu, incType, incVal,
+        bal, crop, land, incPat, isBlind, trust
+      );
 
-      // 3. Store active credentials securely
-      await SecureStore.setItemAsync('auth_token', data.access_token);
-      await SecureStore.setItemAsync('active_user_id', data.user_id);
+      // 4. Store active credentials securely
+      await SecureStore.setItemAsync('auth_token', String(data.access_token));
+      await SecureStore.setItemAsync('active_user_id', String(data.user_id));
 
       router.replace('/(tabs)');
     } catch (error: any) {
