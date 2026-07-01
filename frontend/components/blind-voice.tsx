@@ -1,7 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
-
-const { height } = Dimensions.get('window');
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 
 interface BlindVoiceProps {
   onVoiceAssistantPress?: () => void;

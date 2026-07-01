@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, TextInput, Pressable, Alert, ActivityIndicator } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import { openDB } from '../lib/database';
+import { syncOfflineTransactions } from '../lib/sync';
+// Open or create the local database file
+const parseSQLiteDate = (dateStr: string) => {
+  if (!dateStr) return new Date();
+  if (dateStr.includes('T')) return new Date(dateStr);
+  const formatted = dateStr.replace(' ', 'T') + 'Z';
+  const d = new Date(formatted);
+  return isNaN(d.getTime()) ? new Date(dateStr) : d;
+};
 
 interface Transaction {
   transaction_id: string;
@@ -28,9 +37,9 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
   // Load transactions on mount
   useEffect(() => {
     loadTransactions();
-  }, [userId]);
+  }, [userId, loadTransactions]);
 
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     try {
       const db = await openDB();
       const rows = await db.getAllAsync<Transaction>(
@@ -43,7 +52,7 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   const handleAddTransaction = async (type: 'credit' | 'debit') => {
     const parsedAmount = parseFloat(amount);
@@ -82,6 +91,7 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
       if (onBalanceUpdated) {
         onBalanceUpdated();
       }
+      syncOfflineTransactions();
     } catch (error) {
       console.error('Failed to save offline transaction:', error);
       Alert.alert('Error', 'Failed to save transaction.');
@@ -171,7 +181,7 @@ export default function AudioLedger({ userId, onBalanceUpdated }: AudioLedgerPro
                 <View style={styles.txLeft}>
                   <Text style={styles.txReason}>{tx.reason}</Text>
                   <Text style={styles.txTime}>
-                    {new Date(tx.created_at).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    {parseSQLiteDate(tx.created_at).toLocaleDateString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
                 

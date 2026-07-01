@@ -14,7 +14,11 @@ import {
 import { useRouter, useFocusEffect } from 'expo-router';
 import * as SecureStore from 'expo-secure-store';
 import { openDB } from '../../lib/database';
+import { syncOfflineTransactions } from '../../lib/sync';
 import * as Crypto from 'expo-crypto';
+import { Audio } from 'expo-av';
+import * as Speech from 'expo-speech';
+import axios from 'axios';
 
 // Import our custom widgets
 import BlindVoice from '@/components/blind-voice';
@@ -22,6 +26,7 @@ import EmergencyFund from '@/components/emergency-fund';
 import FinancialScore from '@/components/financial-score';
 import GovtSchemes from '@/components/govt-schemes';
 import ExpenditureAnalytics from '@/components/expenditure-analytics';
+import AudioLedger from '@/components/audio-ledger';
 
 const { width } = Dimensions.get('window');
 
@@ -40,17 +45,21 @@ interface UserProfile {
 }
 
 export default function WelcomeDashboard() {
+  
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
 
   const [isAudioModalVisible, setAudioModalVisible] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [refreshCount, setRefreshCount] = useState(0);
 
   // Fetch profile settings on mount/focus
   useFocusEffect(
     React.useCallback(() => {
       loadUserProfile();
+      syncOfflineTransactions();
     }, [])
   );
 
@@ -79,6 +88,125 @@ export default function WelcomeDashboard() {
     }
   };
 
+  const startRecording = async () => {
+  try {
+    await Audio.requestPermissionsAsync();
+
+    await Audio.setAudioModeAsync({
+      allowsRecordingIOS: true,
+      playsInSilentModeIOS: true,
+    });
+
+    const { recording } = await Audio.Recording.createAsync(
+      Audio.RecordingOptionsPresets.HIGH_QUALITY
+    );
+
+    setRecording(recording);
+  } catch (err) {
+    console.log(err);
+    Alert.alert("Error", "Cannot access microphone");
+  }
+};
+
+const stopRecording = async () => {
+  if (!recording || !profile) return;
+
+  setIsProcessing(true);
+
+  try {
+    await recording.stopAndUnloadAsync();
+    const uri = recording.getURI();
+    console.log("Audio URI:", uri);
+    Alert.alert("Audio URI", String(uri));
+
+    if (!uri) {
+   setIsProcessing(false);
+   setRecording(null);
+   Alert.alert("Error", "Recording failed");
+   return;
+}
+
+    const formData = new FormData();
+
+    formData.append('audio', {
+      uri,
+      name: 'recording.m4a',
+      type: 'audio/m4a',
+    } as any);
+
+    const response = await axios.post(
+      'https://violation-coastline-otter.ngrok-free.dev/audio-khata',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      }
+    );
+
+    const data = response.data;
+    console.log("Audio Khata API Response Data:", data);
+    console.log("Active User Profile:", profile);
+
+    if (!data || data.amount === undefined || data.type === undefined || data.reason === undefined) {
+      throw new Error(`Invalid server response: ${JSON.stringify(data)}. Make sure your backend main.py is updated and uvicorn has reloaded.`);
+    }
+    if (!profile || !profile.user_id) {
+      throw new Error("Local profile user_id is missing. Try logging out and logging in again.");
+    }
+
+    const db = await openDB();
+    const transactionId = Crypto.randomUUID();
+
+    await db.withTransactionAsync(async () => {
+      await db.runAsync(
+        `INSERT INTO transactions (transaction_id, user_id, amount, type, reason, synced)
+         VALUES (?, ?, ?, ?, ?, 0)`,
+        [
+          transactionId,
+          profile.user_id,
+          data.amount,
+          data.type,
+          data.reason
+        ]
+      );
+
+      if (data.type === 'debit') {
+        await db.runAsync(
+          `UPDATE parametric_profiles SET current_balance = current_balance - ? WHERE user_id = ?`,
+          [data.amount, profile.user_id]
+        );
+      } else {
+        await db.runAsync(
+          `UPDATE parametric_profiles SET current_balance = current_balance + ? WHERE user_id = ?`,
+          [data.amount, profile.user_id]
+        );
+      }
+    });
+
+    Speech.speak(data.reply, {
+      language: data.tts_language
+    });
+
+    setRefreshCount(prev => prev + 1);
+    loadUserProfile();
+    syncOfflineTransactions();
+    setAudioModalVisible(false);
+  } catch (err: any) {
+  console.log("FULL ERROR:", err);
+  console.log("RESPONSE:", err?.response?.data);
+  console.log("MESSAGE:", err?.message);
+
+  Alert.alert(
+    "Error",
+    JSON.stringify(err?.response?.data || err?.message || err)
+  );
+}
+  setIsProcessing(false);
+  setRecording(null);
+};
+
   const getMonthlyIncomeValue = (prof: UserProfile) => {
     if (prof.income_type === 'fixed') {
       return parseFloat(prof.income_value) || 0;
@@ -90,40 +218,33 @@ export default function WelcomeDashboard() {
     return 7500;
   };
 
-  const handleMockTranscribe = async () => {
+  const speakFinancialSummary = async () => {
     if (!profile) return;
-    setIsProcessing(true);
-    
-    // Simulate processing delay
-    setTimeout(async () => {
-      try {
-        const db = await openDB();
-        const transactionId = Crypto.randomUUID();
-        const amount = 150;
-        const type = 'debit';
-        const reason = 'Mock: Milk purchase';
-
-        await db.runAsync(
-          `INSERT INTO transactions (transaction_id, user_id, amount, type, reason, synced) VALUES (?, ?, ?, ?, ?, 0)`,
-          [transactionId, profile.user_id, amount, type, reason]
-        );
-
-        await db.runAsync(
-          `UPDATE parametric_profiles SET current_balance = current_balance - ? WHERE user_id = ?`,
-          [amount, profile.user_id]
-        );
-
-        setAudioModalVisible(false);
-        setIsProcessing(false);
-        Alert.alert('Success', 'Recorded: -₹150 for Milk purchase');
-        loadUserProfile(); // Instantly refresh the dashboard balance!
-      } catch (error) {
-        console.error('Failed to save mock transaction:', error);
-        setIsProcessing(false);
-        Alert.alert('Error', 'Failed to save transaction.');
+    try {
+      const db = await openDB();
+      const rows = await db.getAllAsync<{ amount: number; type: string; reason: string }>(
+        `SELECT amount, type, reason FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 3`,
+        [profile.user_id]
+      );
+      
+      let summaryText = `Your current balance is ${profile.current_balance} rupees. `;
+      if (rows && rows.length > 0) {
+        summaryText += "Here are your last three transactions: ";
+        rows.forEach((tx, index) => {
+          const txType = tx.type === 'credit' ? 'earned' : 'spent';
+          summaryText += `Number ${index + 1}: You ${txType} ${tx.amount} rupees for ${tx.reason}. `;
+        });
+      } else {
+        summaryText += "You have no transactions recorded yet.";
       }
-    }, 1500);
+      
+      Speech.speak(summaryText, { language: profile.language_code || 'en' });
+    } catch (e) {
+      console.log('Failed to generate audio summary:', e);
+      Speech.speak("Sorry, I could not retrieve your transaction summary.", { language: 'en' });
+    }
   };
+
 
   if (loading) {
     return (
@@ -180,8 +301,12 @@ export default function WelcomeDashboard() {
       <View style={{ flex: 1, backgroundColor: '#1E1E1E' }}>
         <BlindVoice
           onVoiceAssistantPress={() => router.push('/chat')}
-          onAudioLedgerPress={() => {}}
-          onSummaryPress={() => {}}
+          onAudioLedgerPress={() => {
+            setRecording(null);
+            setIsProcessing(false);
+            setAudioModalVisible(true);
+          }}
+          onSummaryPress={speakFinancialSummary}
         />
       </View>
     );
@@ -229,12 +354,26 @@ export default function WelcomeDashboard() {
           <EmergencyFund currentBalance={profile.current_balance} monthlyIncome={monthlyIncome} isFarmer={false} />
         )}
 
+        {/* D. Offline ledger entries and manual transaction input */}
+        <AudioLedger 
+          key={`ledger-${refreshCount}`}
+          userId={profile.user_id} 
+          onBalanceUpdated={() => {
+            loadUserProfile();
+            setRefreshCount(prev => prev + 1);
+          }} 
+        />
+
       </ScrollView>
 
       {/* Persistent Floating Audio Khata Button */}
       <Pressable
         style={({ pressed }) => [styles.floatingButton, pressed && styles.floatingButtonPressed]}
-        onPress={() => setAudioModalVisible(true)}
+       onPress={() => {
+  setRecording(null);
+  setIsProcessing(false);
+  setAudioModalVisible(true);
+}}
       >
         <Text style={styles.floatingButtonIcon}>🎙️</Text>
         <Text style={styles.floatingButtonText}>Audio Khata</Text>
@@ -250,14 +389,18 @@ export default function WelcomeDashboard() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Audio Khata</Text>
-            <Text style={styles.modalSubtitle}>Speak how much you spent or earned (e.g. "I spent 150 rupees on milk")</Text>
+            <Text style={styles.modalSubtitle}>{"Speak how much you spent or earned (e.g. \"I spent 150 rupees on milk\")"}</Text>
             
             <View style={[styles.micCircle, isProcessing && styles.micCircleProcessing]}>
               <Text style={styles.bigMic}>🎙️</Text>
             </View>
-            <Text style={styles.listeningText}>
-              {isProcessing ? 'Processing...' : 'Listening...'}
-            </Text>
+           <Text style={styles.listeningText}>
+  {isProcessing
+    ? 'Processing...'
+    : recording
+    ? 'Listening...'
+    : 'Tap Start Recording'}
+</Text>
 
             {isProcessing && <ActivityIndicator size="large" color="#8B0A2A" style={{ marginTop: 20 }} />}
 
@@ -265,17 +408,25 @@ export default function WelcomeDashboard() {
               <View style={styles.modalActions}>
                 <Pressable
                   style={[styles.modalBtn, styles.cancelBtn]}
-                  onPress={() => setAudioModalVisible(false)}
+                 onPress={async () => {
+  if (recording) {
+    await recording.stopAndUnloadAsync();
+    setRecording(null);
+  }
+  setAudioModalVisible(false);
+}}
                 >
                   <Text style={styles.cancelBtnText}>Cancel</Text>
                 </Pressable>
                 
-                <Pressable
-                  style={[styles.modalBtn, styles.mockBtn]}
-                  onPress={handleMockTranscribe}
-                >
-                  <Text style={styles.mockBtnText}>Mock Transcribe</Text>
-                </Pressable>
+               <Pressable
+  style={[styles.modalBtn, styles.mockBtn]}
+  onPress={recording ? stopRecording : startRecording}
+>
+  <Text style={styles.mockBtnText}>
+    {recording ? "Stop Recording" : "Start Recording"}
+  </Text>
+</Pressable>
               </View>
             )}
           </View>

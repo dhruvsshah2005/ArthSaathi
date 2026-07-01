@@ -34,9 +34,12 @@ export default function LoginScreen() {
 
     try {
       // 1. Send authentication request to the backend
-      const response = await fetch('https://graceless-freefall-nimbly.ngrok-free.dev/api/login', {
+      const response = await fetch('https://violation-coastline-otter.ngrok-free.dev/api/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify({
           phone_number: cleanPhone,
           password: cleanPassword,
@@ -154,7 +157,7 @@ export default function LoginScreen() {
           )}
 
           <Pressable onPress={() => router.replace('/register-lang')} style={styles.backBtn}>
-            <Text style={styles.backText}>Don't have an account? Sign Up</Text>
+            <Text style={styles.backText}>{"Don't have an account? Sign Up"}</Text>
           </Pressable>
         </View>
       </ScrollView>

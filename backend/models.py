@@ -17,6 +17,8 @@ class User(Base):
     
     # Links the user to their profile
     profile = relationship("ParametricProfile", back_populates="user", uselist=False)
+    # Links the user to their transactions
+    transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
 
 class ParametricProfile(Base):
     __tablename__ = "parametric_profiles"
@@ -42,6 +44,19 @@ class ParametricProfile(Base):
 
     # Links the profile back to the user
     user = relationship("User", back_populates="profile")
+
+class Transaction(Base):
+    __tablename__ = "transactions"
+    
+    transaction_id = Column(String, primary_key=True)
+    user_id = Column(String, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False)
+    amount = Column(Float, nullable=False)
+    type = Column(String, nullable=False)  # 'credit' or 'debit'
+    reason = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Links transaction back to user
+    user = relationship("User", back_populates="transactions")
 
 # This block actually creates the tables in Postgres when you run the file
 if __name__ == "__main__":

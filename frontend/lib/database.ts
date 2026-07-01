@@ -1,9 +1,14 @@
 // lib/database.ts
 import * as SQLite from 'expo-sqlite';
 
-// Open or create the local database file
+let dbInstance: SQLite.SQLiteDatabase | null = null;
+
+// Open or create the local database file (Singleton pattern)
 export const openDB = async () => {
-  return await SQLite.openDatabaseAsync('arthasaathi.db');
+  if (!dbInstance) {
+    dbInstance = await SQLite.openDatabaseAsync('arthasaathi.db');
+  }
+  return dbInstance;
 };
 
 // Initialize schema

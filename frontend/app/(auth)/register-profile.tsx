@@ -89,9 +89,12 @@ export default function RegisterProfileScreen() {
       }
 
       // 3. Send payload to FastAPI using your Ngrok URL
-      const response = await fetch('https://graceless-freefall-nimbly.ngrok-free.dev/api/register', {
+      const response = await fetch('https://violation-coastline-otter.ngrok-free.dev/api/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
         body: JSON.stringify(payload),
       });
 
@@ -115,12 +118,12 @@ export default function RegisterProfileScreen() {
       // 4. If backend succeeds, save to local SQLite for offline access
       const db = await openDB();
       await db.runAsync(
-        `INSERT INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
+        `INSERT OR REPLACE INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
         [localUserId, safePhone, safePassword] // Using the casted strings
       );
 
       await db.runAsync(
-        `INSERT INTO parametric_profiles (
+        `INSERT OR REPLACE INTO parametric_profiles (
           profile_id, user_id, name, language_code, occupation_type, 
           education_level, income_type, income_value, current_balance, 
           crop_type, land_holding, income_pattern, is_blind

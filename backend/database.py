@@ -3,8 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
+
 # The connection string uses the format: postgresql://user:password@host/database_name
-SQLALCHEMY_DATABASE_URL = "postgresql://artha_admin:securepassword123@localhost/arthasaathi"
+SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres123@localhost/testbase"
 
 # Initialize the SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
@@ -22,3 +23,4 @@ def get_db():
         yield db
     finally:
         db.close()
+

@@ -8,7 +8,14 @@ backend/venv/
 **/venv/
 .env
 
-
+.vscode/
+.claude/
+AGENTS.md
+CLAUDE.md
+frontend/.vscode/
+frontend/.claude/
+frontend/AGENTS.md
+frontend/CLAUDE.md
 
 
 # Expo

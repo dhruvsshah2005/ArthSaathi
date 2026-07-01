@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Text, TextInput, Pressable, Alert, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function RegisterBasicScreen() {
