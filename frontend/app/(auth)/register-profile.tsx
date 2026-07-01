@@ -120,6 +120,8 @@ export default function RegisterProfileScreen() {
       await db.runAsync(
         `INSERT OR REPLACE INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
         [localUserId, safePhone, safePassword] // Using the casted strings
+        `INSERT INTO users (user_id, phone_number, password_hash) VALUES (?, ?, ?)`,
+        localUserId, safePhone, safePassword // Using the casted strings
       );
 
       await db.runAsync(
@@ -128,21 +130,19 @@ export default function RegisterProfileScreen() {
           education_level, income_type, income_value, current_balance, 
           crop_type, land_holding, income_pattern, is_blind
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          localProfileId, 
-          localUserId, 
-          safeName, 
-          safeLanguage, 
-          selectedOccupation, 
-          selectedEducation, 
-          incomeType, 
-          incomeType === 'fixed' ? salary : variableRange, 
-          parseFloat(currentBalance) || 0,
-          cropType || null, 
-          landHolding || null, 
-          incomePattern || null,
-          isBlind ? 1 : 0
-        ]
+        localProfileId, 
+        localUserId, 
+        safeName, 
+        safeLanguage, 
+        selectedOccupation, 
+        selectedEducation, 
+        incomeType, 
+        incomeType === 'fixed' ? salary : variableRange, 
+        parseFloat(currentBalance) || 0,
+        cropType || "", 
+        landHolding || "", 
+        incomePattern || "",
+        isBlind ? 1 : 0
       );
 
       // 5. Store the JWT and active user ID securely

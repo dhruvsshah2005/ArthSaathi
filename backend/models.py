@@ -19,6 +19,10 @@ class User(Base):
     profile = relationship("ParametricProfile", back_populates="user", uselist=False)
     # Links the user to their transactions
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
+    
+    # Links to chat sessions and documents
+    chat_sessions = relationship("ChatSession", back_populates="user")
+    documents = relationship("Document", back_populates="user")
 
 class ParametricProfile(Base):
     __tablename__ = "parametric_profiles"
@@ -57,6 +61,45 @@ class Transaction(Base):
     
     # Links transaction back to user
     user = relationship("User", back_populates="transactions")
+class Document(Base):
+    __tablename__ = "documents"
+    
+    document_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
+    file_storage_url = Column(String, nullable=False)
+    document_type = Column(String, nullable=True)
+    raw_extracted_text = Column(String, nullable=False)
+    simplified_summary = Column(String, nullable=True)
+    vector_collection_id = Column(String, nullable=True)
+    upload_timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="documents")
+    chat_sessions = relationship("ChatSession", back_populates="document")
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+    
+    session_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.user_id"), nullable=False)
+    document_id = Column(String, ForeignKey("documents.document_id"), nullable=True)
+    session_title = Column(String, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    user = relationship("User", back_populates="chat_sessions")
+    document = relationship("Document", back_populates="chat_sessions")
+    messages = relationship("ChatMessage", back_populates="session")
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    
+    message_id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(String, ForeignKey("chat_sessions.session_id"), nullable=False)
+    sender_role = Column(String, nullable=False)
+    message_content = Column(String, nullable=False)
+    guardrail_flagged = Column(Boolean, default=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    session = relationship("ChatSession", back_populates="messages")
 
 # This block actually creates the tables in Postgres when you run the file
 if __name__ == "__main__":

@@ -18,6 +18,16 @@ from models import User, ParametricProfile, Transaction
 
 # Load environment variables
 load_dotenv()
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+from fastapi import FastAPI
+from sqlalchemy import text
+from database import engine
+from routers import auth, chat
+
+os.makedirs("uploads/images", exist_ok=True)
 
 # Run automatic schema migration for PostgreSQL
 try:
@@ -34,7 +44,6 @@ app = FastAPI(title="ArthaSaathi API")
 
 # --- Security Configuration ---
 # --- Security Configuration ---
-SECRET_KEY = "artha-saathi-super-secret-key"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
@@ -333,3 +342,5 @@ async def audio_khata(audio: UploadFile = File(...)):
             "tts_language": "en",
             "status": "error"
         }
+# Include Modular Routers
+app.include_router(auth.router)
