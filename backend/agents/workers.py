@@ -19,6 +19,7 @@ def get_latest_user_message(messages):
     return messages[0] if messages else HumanMessage(content="")
 
 async def budget_node(state: AgentState, config: RunnableConfig = None):
+    print(f"\n\033[92m[Budget Agent]\033[0m Fetching SQL transactions and calculating budget metrics...")
     profile = state.get("user_profile", {})
     balance = profile.get("current_balance", 0)
     income = profile.get("income_value", "0")
@@ -45,6 +46,7 @@ async def budget_node(state: AgentState, config: RunnableConfig = None):
     return {"budget_analysis": response.content, "messages": [receipt], "next_node": "supervisor"}
 
 async def planning_node(state: AgentState, config: RunnableConfig = None):
+    print(f"\n\033[93m[Planning Agent]\033[0m Formulating step-by-step financial plan...")
     profile = state.get("user_profile", {})
     income = profile.get("income_value", "0")
     
@@ -65,6 +67,7 @@ async def planning_node(state: AgentState, config: RunnableConfig = None):
     return {"planning_metrics": response.content, "messages": [receipt], "next_node": "supervisor"}
 
 async def auditor_node(state: AgentState, config: RunnableConfig = None):
+    print(f"\n\033[91m[Auditor Agent]\033[0m Scanning document context for hidden debt traps...")
     context = state.get("document_context", "No document context available.")
     
     user_msg = get_latest_user_message(state["messages"])
@@ -87,6 +90,7 @@ class GuardrailEvaluation(BaseModel):
     search_query: str = Field(default="", description="If unsafe and comparing specific banks/institutions, provide a search query to find their current interest rates (e.g., 'SBI vs HDFC current home loan interest rates 2024'). Otherwise empty.")
 
 async def guardrail_node(state: AgentState, config: RunnableConfig = None):
+    print(f"\n\033[95m[Guardrail Agent]\033[0m Verifying output safety and compliance...")
     system_prompt = (
         "You are the Guardrail Node. Check the user's latest message and the gathered notes. "
         "If the user is asking for specific prescriptive advice (e.g., 'should I take a loan from SBI or HDFC?'), "
@@ -116,6 +120,7 @@ async def guardrail_node(state: AgentState, config: RunnableConfig = None):
             except Exception as e:
                 pass
                 
+        print(f"\033[95m[Guardrail Agent]\033[0m \033[91m⚠️ UNSAFE ADVICE DETECTED. Intervening!\033[0m")
         receipt = AIMessage(content=f"[GUARDRAIL TRIGGERED]: {guidance}", name="guardrail_node")
         return {"messages": [receipt]}
     else:

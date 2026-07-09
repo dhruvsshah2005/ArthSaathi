@@ -19,6 +19,8 @@ class RouteDecision(BaseModel):
 structured_llm = llm.with_structured_output(RouteDecision)
 
 async def supervisor_node(state: AgentState):
+    print(f"\n\033[96m[Supervisor Agent]\033[0m Analyzing user request and determining routing...")
+    
     # Track which nodes have populated their notes in the state
     visited = []
     if state.get("budget_analysis"): visited.append("budget")
@@ -50,9 +52,11 @@ async def supervisor_node(state: AgentState):
     if next_n in visited:
         next_n = "guardrail"
     
+    print(f"\033[96m[Supervisor Agent]\033[0m Routing control to -> \033[93m{next_n.upper()}\033[0m")
     return {"next_node": next_n}
 
 async def responder_node(state: AgentState):
+    print(f"\n\033[95m[Responder Agent]\033[0m Compiling final response to the user...")
     # This node writes the final, friendly message to the user
     user_language = state.get("user_profile", {}).get("language_code", "en")
     
