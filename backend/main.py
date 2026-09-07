@@ -5,7 +5,7 @@ load_dotenv()
 from fastapi import FastAPI
 from sqlalchemy import text
 from database import engine, Base
-from routers import auth, chat, transactions
+from routers import auth, chat, transactions, learning
 
 os.makedirs("uploads/images", exist_ok=True)
 
@@ -26,3 +26,4 @@ app = FastAPI(title="ArthaSaathi API")
 app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(transactions.router)
+app.include_router(learning.router)

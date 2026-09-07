@@ -53,6 +53,11 @@ export const initLocalDB = async () => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS app_cache (
+      key TEXT PRIMARY KEY NOT NULL,
+      value TEXT NOT NULL
+    );
   `);
 
   // Run schema migrations for existing database installations

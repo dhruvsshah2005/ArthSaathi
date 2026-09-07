@@ -46,7 +46,26 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+frontend/.env
+backend/.env
+
+# context dump files containing secrets/API keys
+backend-context
+backend-context.md
+frontend-context
+frontend-context.md
+*-context
+*-context.md
+
+# python cache and database data
+__pycache__/
+*.pyc
+backend/chroma_data/
+
+
+
 
 # typescript
 *.tsbuildinfo

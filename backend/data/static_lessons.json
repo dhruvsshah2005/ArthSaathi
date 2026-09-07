@@ -1,0 +1,202 @@
+{
+  "under_5th": [
+    {
+      "id": "u5_saving_piggy",
+      "category": "Savings",
+      "title": "Saving in a Piggy Bank",
+      "content": "Saving means keeping a small part of your money safe for the future. A piggy bank (Gullak) is a great tool for this! Every time you get coins or notes, put a tiny bit inside. Over time, these small coins grow into a big pile of money that can help you when you need it most.",
+      "icon": "🐷",
+      "quiz": {
+        "question": "What is a Gullak (Piggy Bank) used for?",
+        "options": [
+          "Spending all your money immediately",
+          "Keeping small savings safe for the future",
+          "Throwing money away"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "u5_otp_safety",
+      "category": "Security",
+      "title": "Never Share Your OTP or PIN",
+      "content": "A PIN or OTP (One-Time Password) is like a secret key to your money. Just like you would never give your house keys to a stranger, you must never tell anyone your PIN or OTP, even if they claim to call from your bank. Keep it secret to keep your money safe!",
+      "icon": "🔑",
+      "quiz": {
+        "question": "Is it safe to share your bank OTP or PIN with someone on the phone?",
+        "options": [
+          "Yes, if they say they are from the bank",
+          "No, never share it with anyone",
+          "Yes, if they promise to give you a prize"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "u5_bank_basics",
+      "category": "Banking",
+      "title": "Why Keep Money in a Bank?",
+      "content": "Keeping too much cash at home can be risky because of theft or damage. A bank is a safe house for your money. When you put money in the bank, the bank keeps it completely safe, and you can withdraw it whenever you need it.",
+      "icon": "🏦",
+      "quiz": {
+        "question": "Why is a bank safer than keeping cash under the bed?",
+        "options": [
+          "It protects your money from theft and damage",
+          "It makes your money disappear",
+          "It is not safer"
+        ],
+        "correct_answer_index": 0
+      }
+    }
+  ],
+  "5th_pass": [
+    {
+      "id": "p5_account_types",
+      "category": "Banking",
+      "title": "Understanding a Savings Account",
+      "content": "A Savings Account is a bank account where you deposit your extra money. The bank not only keeps it safe but also pays you a small reward called 'Interest' just for keeping your money there. It is the best place to start your financial journey.",
+      "icon": "🏦",
+      "quiz": {
+        "question": "What does a bank give you as a reward for keeping money in a savings account?",
+        "options": [
+          "Nothing",
+          "Interest (extra money)",
+          "A free lock and key"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "p5_loan_sharks",
+      "category": "Borrowing",
+      "title": "Beware of Local Loan Sharks",
+      "content": "Local money lenders (loan sharks) often charge extremely high interest rates, making it very hard to pay back. If you need money, always try to go to a formal bank first. Bank loans have strict rules, but they are much cheaper and safer than local lenders.",
+      "icon": "🪤",
+      "quiz": {
+        "question": "Why are local money lenders (loan sharks) dangerous?",
+        "options": [
+          "They don't charge any interest",
+          "They charge extremely high interest rates that trap you in debt",
+          "They are official bank workers"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "p5_digital_pay",
+      "category": "Digital Payments",
+      "title": "Using UPI and QR Codes Safely",
+      "content": "UPI apps (like PhonePe, Google Pay, or Paytm) let you pay instantly by scanning a QR code. Remember: scanning a QR code or entering your PIN is only for SENDING money. You never need to enter your PIN or scan a QR code to RECEIVE money.",
+      "icon": "📱",
+      "quiz": {
+        "question": "When do you need to enter your UPI PIN?",
+        "options": [
+          "Only when sending/paying money to someone",
+          "When receiving money from someone",
+          "Every time you open the app"
+        ],
+        "correct_answer_index": 0
+      }
+    }
+  ],
+  "10th_pass": [
+    {
+      "id": "p10_budgeting",
+      "category": "Budgeting",
+      "title": "The 50/30/20 Budget Rule",
+      "content": "Budgeting helps you control where your money goes. A simple rule is the 50/30/20 rule: Spend 50% of your income on 'Needs' (rent, food, bills), 30% on 'Wants' (movies, dining out, hobbies), and save 20% immediately for your future goals and emergencies.",
+      "icon": "📊",
+      "quiz": {
+        "question": "Under the 50/30/20 rule, what percentage of your income should you try to save?",
+        "options": [
+          "50%",
+          "30%",
+          "20%"
+        ],
+        "correct_answer_index": 2
+      }
+    },
+    {
+      "id": "p10_compounding",
+      "category": "Savings",
+      "title": "The Magic of Compound Interest",
+      "content": "Simple interest pays you interest only on your original money. Compound interest pays you interest on your original money PLUS the interest you have already earned. Over time, compounding acts like a snowball, making your savings grow faster and faster.",
+      "icon": "⏳",
+      "quiz": {
+        "question": "What is compound interest?",
+        "options": [
+          "Interest earned only on the initial amount",
+          "Interest earned on both the initial amount and accumulated interest",
+          "A penalty fee charged by banks"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "p10_gov_schemes",
+      "category": "Government Schemes",
+      "title": "PM Jan Dhan & Sukanya Samriddhi",
+      "content": "The government offers special schemes to help citizens. Pradhan Mantri Jan Dhan Yojana (PMJDY) offers zero-balance accounts with free insurance. Sukanya Samriddhi Yojana (SSY) offers very high interest rates for savings accounts opened for girl children. Always check government bank portals for these high-benefit schemes.",
+      "icon": "🇮🇳",
+      "quiz": {
+        "question": "Which government scheme is designed specifically for saving for a girl child's education or marriage?",
+        "options": [
+          "PM Jan Dhan Yojana",
+          "Sukanya Samriddhi Yojana",
+          "PM Mudra Yojana"
+        ],
+        "correct_answer_index": 1
+      }
+    }
+  ],
+  "12th_pass_above": [
+    {
+      "id": "p12_mutual_funds",
+      "category": "Investment",
+      "title": "Introduction to Mutual Funds & SIPs",
+      "content": "Mutual funds collect money from many investors and invest it in a mix of stocks and bonds managed by experts. A Systematic Investment Plan (SIP) lets you invest a small, fixed amount (like ₹500) monthly. While mutual funds carry market risk, they generally offer much higher returns than savings accounts over the long term.",
+      "icon": "🚀",
+      "quiz": {
+        "question": "What is a Systematic Investment Plan (SIP)?",
+        "options": [
+          "A plan to borrow money monthly",
+          "Investing a fixed small amount regularly in mutual funds",
+          "A government crop insurance scheme"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "p12_credit_score",
+      "category": "Debt",
+      "title": "Understanding Credit Scores (CIBIL)",
+      "content": "A Credit Score (like CIBIL) is a number between 300 and 900 that shows how reliable you are at repaying loans. If you pay your credit cards and loan EMIs on time, your score goes up. A high score (above 750) helps you get loans easily and at much lower interest rates.",
+      "icon": "📑",
+      "quiz": {
+        "question": "What does a high CIBIL score (e.g., 780) indicate to a lender?",
+        "options": [
+          "The borrower is high risk and likely to default",
+          "The borrower is highly reliable and qualifies for lower interest rates",
+          "The borrower has no bank accounts"
+        ],
+        "correct_answer_index": 1
+      }
+    },
+    {
+      "id": "p12_inflation",
+      "category": "Macroeconomics",
+      "title": "Inflation: The Silent Money Eater",
+      "content": "Inflation is the gradual rise in prices of goods and services over time. If inflation is 6%, a product costing ₹100 today will cost ₹106 next year. If your money is just sitting as cash or in a low-interest bank account (earning 3%), its actual purchasing power is shrinking. To beat inflation, you need to invest in assets that earn higher returns than the inflation rate.",
+      "icon": "💸",
+      "quiz": {
+        "question": "Why is keeping large amounts of long-term cash at home risky during inflation?",
+        "options": [
+          "The physical notes will grow larger",
+          "Its actual purchasing power will decrease as prices rise",
+          "It is completely safe and unaffected"
+        ],
+        "correct_answer_index": 1
+      }
+    }
+  ]
+}

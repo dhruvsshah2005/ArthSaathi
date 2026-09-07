@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User, ParametricProfile
-from schemas import RegisterPayload, LoginPayload
+from schemas import RegisterPayload, LoginPayload, ProfileUpdatePayload
 from security import get_password_hash, verify_password, create_access_token
 
 router = APIRouter(prefix="/api", tags=["auth"])
@@ -101,3 +101,46 @@ def get_all_profiles(db: Session = Depends(get_db)):
     # Fetch all profiles from the PostgreSQL database
     profiles = db.query(ParametricProfile).all()
     return profiles
+
+
+@router.put("/profile/update")
+def update_profile(payload: ProfileUpdatePayload, db: Session = Depends(get_db)):
+    profile = db.query(ParametricProfile).filter(ParametricProfile.user_id == payload.user_id).first()
+    if not profile:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    profile.name = payload.name
+    profile.language_code = payload.language_code
+    profile.occupation_type = payload.occupation_type
+    profile.education_level = payload.education_level
+    profile.income_type = payload.income_type
+    profile.income_value = payload.income_value
+    profile.current_balance = payload.current_balance
+    profile.crop_type = payload.crop_type
+    profile.land_holding = payload.land_holding
+    profile.income_pattern = payload.income_pattern
+    profile.is_blind = payload.is_blind
+
+    db.commit()
+    db.refresh(profile)
+
+    return {
+        "status": "success",
+        "profile": {
+            "profile_id": profile.profile_id,
+            "user_id": profile.user_id,
+            "name": profile.name,
+            "language_code": profile.language_code,
+            "occupation_type": profile.occupation_type,
+            "education_level": profile.education_level,
+            "income_type": profile.income_type,
+            "income_value": profile.income_value,
+            "current_balance": profile.current_balance,
+            "crop_type": profile.crop_type,
+            "land_holding": profile.land_holding,
+            "income_pattern": profile.income_pattern,
+            "is_blind": 1 if profile.is_blind else 0,
+            "trust_score": profile.trust_score
+        }
+    }
+
